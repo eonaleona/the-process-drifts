@@ -1,24 +1,18 @@
-# The Process Drifts
+[README.md](https://github.com/user-attachments/files/29425260/README.md)
+# terminal version archive
 
-A simple beginner-friendly one-page website about entropy in quality engineering.
+This folder is for the terminal-style `the process drifts` website only.
 
-The site explains how processes naturally drift into disorder unless quality systems notice, measure, and correct that drift.
-
-## What This Project Uses
-
-This project is intentionally simple:
-
-- HTML for the page structure
-- CSS for the visual design and responsive layout
-- JavaScript for small interactions
-- No backend
-- No build tools
-- No dependencies
-
-## Files
+The unrelated concept pages were removed from this archive so it only tracks the specific HTML used for the final site.
 
 ```text
-index.html   The main webpage content
-styles.css   The design, layout, colors, and responsive styles
-script.js    The interactive behavior
-README.md    Project notes and publishing instructions
+v1-terminal-console-current.html   current terminal website snapshot
+```
+
+The active website entry point is:
+
+```text
+../index.html
+```
+
+Note: earlier terminal micro-iterations were not saved as separate files at the time they were made, so this archive preserves the current finished terminal version rather than inventing intermediate versions.
