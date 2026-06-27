@@ -3,194 +3,1341 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Process Drifts</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>the process drifts | terminal console</title>
+  <style>
+    :root {
+      --bg: #060807;
+      --shell: #0a0f0d;
+      --panel: #0f1714;
+      --panel-strong: #121d19;
+      --ink: #d8f8e8;
+      --muted: #7f958e;
+      --dim: #53635e;
+      --line: #20342d;
+      --line-bright: #315548;
+      --green: #6ff0a8;
+      --blue: #7ab8ff;
+      --amber: #f1bd61;
+      --red: #ff756d;
+      --shadow: rgba(0, 0, 0, 0.5);
+      --grid: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(rgba(111, 240, 168, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(111, 240, 168, 0.035) 1px, transparent 1px),
+        radial-gradient(circle at 78% 10%, rgba(122, 184, 255, 0.12), transparent 30%),
+        radial-gradient(circle at 18% 80%, rgba(111, 240, 168, 0.08), transparent 34%),
+        var(--bg);
+      background-size: 32px 32px, 32px 32px, auto, auto, auto;
+      color: var(--ink);
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      line-height: 1.55;
+      text-transform: lowercase;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.025),
+        rgba(255, 255, 255, 0.025) 1px,
+        transparent 1px,
+        transparent 4px
+      );
+      opacity: 0.35;
+    }
+
+    body.is-disordered {
+      background-size: 29px 34px, 34px 29px, auto, auto, auto;
+      filter: contrast(1.12) saturate(1.18) hue-rotate(-10deg);
+    }
+
+    body.is-disordered::before {
+      opacity: 0.78;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.08),
+        rgba(255, 255, 255, 0.08) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    h1,
+    h2,
+    h3,
+    p,
+    blockquote {
+      margin-top: 0;
+    }
+
+    h1 {
+      max-width: 980px;
+      margin-bottom: 24px;
+      font-size: clamp(4rem, 12vw, 11.5rem);
+      line-height: 0.78;
+      letter-spacing: -0.08em;
+    }
+
+    h2 {
+      margin-bottom: 22px;
+      color: var(--blue);
+      font-size: clamp(2rem, 5vw, 5.25rem);
+      line-height: 0.9;
+      letter-spacing: -0.055em;
+    }
+
+    h3 {
+      margin-bottom: 10px;
+      color: var(--ink);
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      color: var(--muted);
+    }
+
+    .shell {
+      width: min(1280px, calc(100% - 32px));
+      margin: 24px auto;
+      border: 1px solid var(--line);
+      background: rgba(10, 15, 13, 0.92);
+      box-shadow: 0 28px 90px var(--shadow);
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: auto minmax(160px, 1fr) auto auto;
+      gap: 16px;
+      align-items: center;
+      min-height: 56px;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(10, 15, 13, 0.92);
+      backdrop-filter: blur(16px);
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .window-controls span {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--dim);
+    }
+
+    .window-controls span:nth-child(1) { background: var(--red); }
+    .window-controls span:nth-child(2) { background: var(--amber); }
+    .window-controls span:nth-child(3) { background: var(--green); }
+
+    .path {
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 14px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    nav a {
+      padding: 4px 0;
+      border-bottom: 1px solid transparent;
+    }
+
+    nav a:hover {
+      color: var(--green);
+      border-color: var(--green);
+    }
+
+    .entropy-controls {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .entropy-button {
+      min-height: 30px;
+      padding: 0 10px;
+      border: 1px solid var(--line-bright);
+      background: rgba(111, 240, 168, 0.06);
+      color: var(--green);
+      font: inherit;
+      font-size: 0.72rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-transform: lowercase;
+    }
+
+    .entropy-button:hover {
+      border-color: var(--green);
+      background: rgba(111, 240, 168, 0.12);
+    }
+
+    main {
+      padding: 0 32px 32px;
+    }
+
+    .terminal-section {
+      display: grid;
+      grid-template-columns: 176px minmax(0, 1fr);
+      gap: 32px;
+      padding: 88px 0;
+      border-bottom: 1px solid var(--line);
+      transition: transform 180ms ease;
+    }
+
+    body.is-disordered .terminal-section:nth-child(odd) {
+      transform: translateX(5px);
+    }
+
+    body.is-disordered .terminal-section:nth-child(even) {
+      transform: translateX(-7px);
+    }
+
+    body.is-disordered h1,
+    body.is-disordered h2,
+    body.is-disordered .command {
+      text-shadow: 2px 0 var(--red), -2px 0 var(--blue);
+    }
+
+    body.is-disordered p,
+    body.is-disordered blockquote {
+      transform: translateX(2px);
+    }
+
+    .terminal-section:last-child {
+      border-bottom: 0;
+    }
+
+    .gutter {
+      position: sticky;
+      top: 80px;
+      align-self: start;
+      color: var(--dim);
+      font-size: 0.82rem;
+    }
+
+    .gutter span {
+      display: block;
+      padding-bottom: 8px;
+    }
+
+    .command {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      color: var(--green);
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+
+    .prompt {
+      color: var(--amber);
+    }
+
+    .lead {
+      max-width: 720px;
+      color: var(--muted);
+      font-size: clamp(1.05rem, 2vw, 1.45rem);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .status-panel {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      align-content: end;
+      min-height: 420px;
+      padding: 22px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(135deg, rgba(111, 240, 168, 0.12), rgba(6, 8, 7, 0.18)),
+        url("assets/signal-integrity.png");
+      background-size: cover;
+      background-position: center;
+      filter: contrast(1.12) saturate(0.82);
+    }
+
+    .status-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(6, 8, 7, 0.12), rgba(6, 8, 7, 0.86)),
+        repeating-linear-gradient(
+          0deg,
+          rgba(255, 255, 255, 0.055) 0,
+          transparent 2px,
+          transparent 5px
+        );
+      mix-blend-mode: overlay;
+      pointer-events: none;
+    }
+
+    .status-panel::after {
+      content: "signal integrity: unstable";
+      position: absolute;
+      left: 18px;
+      top: 18px;
+      color: var(--green);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-shadow: 0 1px 18px rgba(0, 0, 0, 0.9);
+      pointer-events: none;
+    }
+
+    .metric {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.1;
+    }
+
+    .metric strong {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 400;
+      line-height: 1.1;
+      text-align: right;
+    }
+
+    .metric .drifting {
+      color: var(--muted);
+    }
+
+    .copy-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 32px;
+      align-items: start;
+    }
+
+    .copy {
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      margin-top: 32px;
+      border: 1px solid var(--line);
+      background: var(--line);
+    }
+
+    body.is-disordered .card-grid {
+      gap: 5px;
+      background: transparent;
+      border-color: var(--red);
+    }
+
+    body.is-disordered .drift-card:nth-child(2n) {
+      transform: translateY(7px);
+    }
+
+    body.is-disordered .drift-card:nth-child(2n + 1) {
+      transform: translateY(-5px);
+    }
+
+    .drift-card,
+    .tool-card,
+    .note-card {
+      min-height: 188px;
+      padding: 22px;
+      background: var(--panel);
+    }
+
+    .drift-card {
+      display: grid;
+      gap: 14px;
+      align-content: center;
+    }
+
+    .card-button {
+      width: 100%;
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      font: inherit;
+      font-weight: 800;
+      text-align: left;
+      cursor: pointer;
+      text-transform: lowercase;
+    }
+
+    .plus {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border: 1px solid var(--line-bright);
+      color: var(--green);
+    }
+
+    .drift-card p {
+      max-height: 0;
+      margin: 0;
+      overflow: hidden;
+      transition: max-height 220ms ease;
+    }
+
+    .drift-card.is-open p {
+      max-height: 140px;
+    }
+
+    .drift-card.is-open {
+      align-content: center;
+    }
+
+    .drift-card.is-open .plus {
+      color: var(--amber);
+    }
+
+    .attention-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.9fr);
+      gap: 16px;
+    }
+
+    .attention-callout {
+      display: grid;
+      place-content: center;
+      padding: 24px;
+      border: 1px solid var(--line);
+      background: var(--panel-strong);
+      text-align: center;
+    }
+
+    .attention-callout strong {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--green);
+    }
+
+    .attention-callout p {
+      max-width: 340px;
+      margin-bottom: 0;
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      margin-top: 32px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: var(--line);
+    }
+
+    .tool-card {
+      display: grid;
+      align-content: center;
+      min-height: 188px;
+      background:
+        linear-gradient(180deg, rgba(111, 240, 168, 0.035), transparent),
+        var(--panel);
+    }
+
+    .tool-card:nth-child(7) {
+      grid-column: 1 / -1;
+      min-height: 144px;
+      border-left: 2px solid var(--amber);
+    }
+
+    .lab {
+      display: grid;
+      grid-template-columns: 5fr 7fr;
+      gap: 16px;
+      margin-top: 32px;
+    }
+
+    .control-panel,
+    .readout {
+      padding: 26px;
+      border: 1px solid var(--line);
+      background: #050807;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--green);
+      cursor: ew-resize;
+    }
+
+    .scale-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .entropy-bars {
+      display: grid;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    .bar {
+      height: 12px;
+      background: #102019;
+    }
+
+    .bar span {
+      display: block;
+      width: 40%;
+      height: 100%;
+      background: var(--green);
+      transition: width 180ms ease, background 180ms ease;
+    }
+
+    body.is-disordered .bar span {
+      width: 100% !important;
+      background: var(--red) !important;
+    }
+
+    .readout {
+      min-height: 310px;
+    }
+
+    .readout pre {
+      margin: 0;
+      color: var(--ink);
+      white-space: pre-wrap;
+      font: inherit;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 9px;
+      height: 18px;
+      margin-left: 4px;
+      background: var(--green);
+      animation: blink 1s steps(1) infinite;
+      vertical-align: text-bottom;
+    }
+
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+    .notes-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 32px;
+    }
+
+    .archive-log {
+      display: grid;
+      margin-top: 32px;
+      padding: 18px 0;
+      border: 1px solid var(--line);
+      background: #050807;
+    }
+
+    .archive-entry {
+      display: grid;
+      grid-template-columns: 128px 150px minmax(0, 1fr);
+      gap: 18px;
+      align-items: baseline;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: transparent;
+    }
+
+    .archive-entry:last-child {
+      border-bottom: 0;
+    }
+
+    .archive-entry code,
+    .archive-entry span {
+      color: var(--green);
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .archive-entry p {
+      margin-bottom: 0;
+      color: var(--muted);
+    }
+
+    .hidden-notes {
+      margin-top: 24px;
+      border: 1px solid var(--line);
+      background: rgba(5, 8, 7, 0.78);
+    }
+
+    .hidden-notes summary {
+      display: flex;
+      align-items: center;
+      min-height: 52px;
+      padding: 0 18px;
+      color: var(--green);
+      font-weight: 800;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .hidden-notes summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .hidden-notes summary::after {
+      content: "+";
+      margin-left: auto;
+      color: var(--amber);
+    }
+
+    .hidden-notes[open] summary::after {
+      content: "-";
+    }
+
+    .time-notes {
+      display: grid;
+      gap: 1px;
+      margin: 0;
+      padding: 0;
+      border-top: 1px solid var(--line);
+      background: var(--line);
+      list-style: none;
+    }
+
+    .time-notes li {
+      padding: 16px 18px;
+      background: var(--panel);
+      color: var(--muted);
+    }
+
+    .spc-panel {
+      margin-top: 16px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(122, 184, 255, 0.035), transparent),
+        #050807;
+    }
+
+    .spc-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: baseline;
+      margin-bottom: 16px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .spc-header strong {
+      color: var(--green);
+      font-weight: 800;
+    }
+
+    .spc-chart {
+      width: 100%;
+      height: 220px;
+      display: block;
+      border: 1px solid var(--line);
+      background: #0a0f0d;
+    }
+
+    .spc-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .spc-legend span::before {
+      content: "";
+      display: inline-block;
+      width: 18px;
+      height: 3px;
+      margin-right: 7px;
+      vertical-align: middle;
+      background: var(--green);
+    }
+
+    .spc-legend span:nth-child(2)::before {
+      background: var(--blue);
+    }
+
+    .spc-legend span:nth-child(3)::before,
+    .spc-legend span:nth-child(4)::before {
+      background: var(--red);
+    }
+
+    .note-card {
+      display: flex;
+      align-items: center;
+      border-left: 3px solid var(--amber);
+      color: var(--muted);
+      font-style: normal;
+    }
+
+    footer {
+      padding: 24px 32px 34px;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+      font-size: 0.82rem;
+    }
+
+    @media (max-width: 1040px) {
+      .tool-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .hero-grid,
+      .copy-grid,
+      .attention-panel,
+      .lab {
+        grid-template-columns: 1fr;
+      }
+
+      .status-panel {
+        min-height: auto;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .shell {
+        width: min(100% - 16px, 1280px);
+        margin: 8px auto;
+      }
+
+      .topbar,
+      .terminal-section,
+      .card-grid,
+      .tool-grid,
+      .notes-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        padding: 14px 16px;
+      }
+
+      nav {
+        justify-content: flex-start;
+      }
+
+      main {
+        padding: 0 18px 24px;
+      }
+
+      .terminal-section {
+        gap: 18px;
+        padding: 64px 0;
+      }
+
+      .gutter {
+        position: static;
+        display: flex;
+        gap: 10px;
+      }
+
+      .archive-entry {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+
+      .spc-header {
+        display: grid;
+      }
+
+      .spc-chart {
+        height: 180px;
+      }
+
+      h1 {
+        font-size: clamp(3.4rem, 18vw, 6rem);
+      }
+    }
+  </style>
 </head>
 <body>
-  <header class="site-header">
-    <nav class="nav" aria-label="Main navigation">
-      <a class="logo" href="#top">The Process Drifts</a>
-      <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-      <ul class="nav-links">
-        <li><a href="#entropy">Entropy</a></li>
-        <li><a href="#quality">Quality</a></li>
-        <li><a href="#attention">Attention</a></li>
-        <li><a href="#tools">Tools</a></li>
-        <li><a href="#notes">Notes</a></li>
-      </ul>
-    </nav>
-  </header>
-
-  <main id="top">
-    <section class="hero section">
-      <div class="hero-grid" aria-hidden="true"></div>
-      <div class="hero-content fade-in">
-        <p class="eyebrow">Quality engineering, softly observed</p>
-        <h1>The Process Drifts</h1>
-        <p class="tagline">Every process drifts. Quality is how we notice.</p>
-        <a class="button" href="#entropy">Start noticing</a>
+  <div class="shell">
+    <header class="topbar">
+      <div class="window-controls" aria-hidden="true"><span></span><span></span><span></span></div>
+      <strong class="path">~/quality/the-process-drifts/index.html</strong>
+      <nav aria-label="main navigation">
+        <a href="#entropy">entropy</a>
+        <a href="#quality">quality</a>
+        <a href="#attention">attention</a>
+        <a href="#tools">tools</a>
+        <a href="#scale">scale</a>
+        <a href="#archive">archive</a>
+        <a href="#notes">notes</a>
+      </nav>
+      <div class="entropy-controls" aria-label="entropy controls">
+        <button class="entropy-button" id="disorderButton" type="button">[ induce disorder ]</button>
+        <button class="entropy-button" id="restoreButton" type="button">[ restore control ]</button>
       </div>
-    </section>
+    </header>
 
-    <section id="entropy" class="section two-column">
-      <div>
-        <p class="eyebrow">01 / Entropy</p>
-        <h2>What is entropy?</h2>
-      </div>
-      <div class="section-copy">
-        <p>
-          Entropy is a way to talk about disorder. Left alone, tidy things become less tidy.
-          Clear signals become noisy. Sharp edges wear down. Instructions get copied,
-          interpreted, skipped, and forgotten.
-        </p>
-        <p>
-          In everyday quality work, entropy looks like drift, uncertainty, decay, and the
-          slow loss of control. It is not always dramatic. Sometimes it arrives as a tiny
-          change that nobody notices until the data starts whispering.
-        </p>
-      </div>
-    </section>
+    <main id="top">
+      <section class="terminal-section hero">
+        <aside class="gutter" aria-label="line numbers">
+          <span>001</span><span>002</span><span>003</span><span>004</span>
+        </aside>
+        <div class="hero-grid">
+          <div>
+            <div class="command"><span class="prompt">$</span> run ./quality-observer</div>
+            <p class="lead">quality engineering, softly observed</p>
+            <h1>the process drifts</h1>
+            <p class="lead">every process drifts. quality is how we notice.</p>
+          </div>
+          <aside class="status-panel" aria-label="quality status">
+            <div class="metric"><span>signal clarity</span><strong class="drifting" data-base="82">82.00%</strong></div>
+            <div class="metric"><span>process noise</span><strong class="drifting" data-base="18">18.00%</strong></div>
+            <div class="metric"><span>active controls</span><strong>07</strong></div>
+            <div class="metric"><span>process state</span><strong>process stable</strong></div>
+            <div class="metric"><span>local timestamp</span><strong id="localTime">00:00:00</strong></div>
+            <div class="metric"><span>system timestamp</span><strong id="systemTime">00:00:00</strong></div>
+            <div class="metric"><span>status</span><strong>watching</strong></div>
+          </aside>
+        </div>
+      </section>
 
-    <section id="quality" class="section">
-      <div class="section-heading">
-        <p class="eyebrow">02 / Quality</p>
-        <h2>Entropy in quality</h2>
-        <p>
-          A process rarely falls apart all at once. More often, it wanders.
-        </p>
-      </div>
+      <section id="entropy" class="terminal-section">
+        <aside class="gutter" aria-label="line numbers">
+          <span>014</span><span>015</span><span>016</span><span>017</span>
+        </aside>
+        <div class="copy-grid">
+          <div>
+            <div class="command"><span class="prompt">$</span> define entropy</div>
+            <h2>what is entropy?</h2>
+          </div>
+          <div class="copy">
+            <p>entropy is a way to talk about disorder. left alone, tidy things become less tidy. clear signals become noisy. sharp edges wear down. instructions get copied, interpreted, skipped, and forgotten.</p>
+            <p>in everyday quality work, entropy looks like drift, uncertainty, decay, and the slow loss of control. it is not always dramatic. sometimes it arrives as a tiny change that nobody notices until the data starts whispering.</p>
+          </div>
+        </div>
+      </section>
 
-      <div class="card-grid">
-        <article class="drift-card">
-          <button class="card-button" type="button" aria-expanded="false">
-            <span>Tool wear</span>
-            <span class="plus" aria-hidden="true">+</span>
-          </button>
-          <p>A cutter slowly loses its edge. Dimensions shift before anyone hears the change.</p>
-        </article>
+      <section id="quality" class="terminal-section">
+        <aside class="gutter" aria-label="line numbers">
+          <span>028</span><span>029</span><span>030</span><span>031</span>
+        </aside>
+        <div>
+          <div class="command"><span class="prompt">$</span> list entropy --quality</div>
+          <h2>entropy in quality</h2>
+          <p class="lead">a process rarely falls apart all at once. more often, it wanders.</p>
 
-        <article class="drift-card">
-          <button class="card-button" type="button" aria-expanded="false">
-            <span>Gage drift</span>
-            <span class="plus" aria-hidden="true">+</span>
-          </button>
-          <p>A measurement system ages, moves, or gets bumped. The numbers still look official.</p>
-        </article>
+          <div class="card-grid">
+            <article class="drift-card">
+              <button class="card-button" type="button" aria-expanded="false">
+                <span>tool wear</span><span class="plus" aria-hidden="true">+</span>
+              </button>
+              <p>a cutter slowly loses its edge. dimensions shift before anyone hears the change.</p>
+            </article>
 
-        <article class="drift-card">
-          <button class="card-button" type="button" aria-expanded="false">
-            <span>Missed defects</span>
-            <span class="plus" aria-hidden="true">+</span>
-          </button>
-          <p>Repetition dulls attention. The eye learns the pattern and skips the surprise.</p>
-        </article>
+            <article class="drift-card">
+              <button class="card-button" type="button" aria-expanded="false">
+                <span>gage drift</span><span class="plus" aria-hidden="true">+</span>
+              </button>
+              <p>a measurement system ages, moves, or gets bumped. the numbers still look official.</p>
+            </article>
 
-        <article class="drift-card">
-          <button class="card-button" type="button" aria-expanded="false">
-            <span>Outdated instructions</span>
-            <span class="plus" aria-hidden="true">+</span>
-          </button>
-          <p>The work changes, but the document does not. People build from memory instead.</p>
-        </article>
+            <article class="drift-card">
+              <button class="card-button" type="button" aria-expanded="false">
+                <span>missed defects</span><span class="plus" aria-hidden="true">+</span>
+              </button>
+              <p>repetition dulls attention. the eye learns the pattern and skips the surprise.</p>
+            </article>
 
-        <article class="drift-card">
-          <button class="card-button" type="button" aria-expanded="false">
-            <span>Supplier variation</span>
-            <span class="plus" aria-hidden="true">+</span>
-          </button>
-          <p>A new lot, material source, or hidden process change adds variation upstream.</p>
-        </article>
+            <article class="drift-card">
+              <button class="card-button" type="button" aria-expanded="false">
+                <span>outdated instructions</span><span class="plus" aria-hidden="true">+</span>
+              </button>
+              <p>the work changes, but the document does not. people build from memory instead.</p>
+            </article>
 
-        <article class="drift-card">
-          <button class="card-button" type="button" aria-expanded="false">
-            <span>Process variation</span>
-            <span class="plus" aria-hidden="true">+</span>
-          </button>
-          <p>Temperature, setup, training, fixtures, and timing all tug the process off center.</p>
-        </article>
-      </div>
-    </section>
+            <article class="drift-card">
+              <button class="card-button" type="button" aria-expanded="false">
+                <span>supplier variation</span><span class="plus" aria-hidden="true">+</span>
+              </button>
+              <p>a new lot, material source, or hidden process change adds variation upstream.</p>
+            </article>
 
-    <section id="attention" class="section two-column dark-band">
-      <div>
-        <p class="eyebrow">03 / Attention</p>
-        <h2>Human attention is part of the system.</h2>
-      </div>
-      <div class="section-copy">
-        <p>
-          Inspection depends on people, and people are not cameras. We adapt. We predict.
-          We get tired. After seeing the same part hundreds of times, the brain starts saving
-          energy by recognizing the usual shape instead of studying every detail.
-        </p>
-        <p>
-          This is inspection fatigue and habituation. It does not mean inspectors are careless.
-          It means the quality system must be designed with human limits in mind: rotation,
-          lighting, clear criteria, error-proofing, and checks that help attention return.
-        </p>
-      </div>
-    </section>
+            <article class="drift-card">
+              <button class="card-button" type="button" aria-expanded="false">
+                <span>process variation</span><span class="plus" aria-hidden="true">+</span>
+              </button>
+              <p>temperature, setup, training, fixtures, and timing all tug the process off center.</p>
+            </article>
+          </div>
+        </div>
+      </section>
 
-    <section id="tools" class="section">
-      <div class="section-heading">
-        <p class="eyebrow">04 / Anti-entropy tools</p>
-        <h2>Quality tools pull the process back into view.</h2>
-      </div>
+      <section id="attention" class="terminal-section">
+        <aside class="gutter" aria-label="line numbers">
+          <span>052</span><span>053</span><span>054</span><span>055</span>
+        </aside>
+        <div>
+          <div class="command"><span class="prompt">$</span> inspect human-attention</div>
+          <div class="attention-panel">
+            <div>
+              <h2>human attention is part of the system.</h2>
+              <p class="copy">inspection depends on people, and people are not cameras. we adapt. we predict. we get tired. after seeing the same part hundreds of times, the brain starts saving energy by recognizing the usual shape instead of studying every detail.</p>
+              <p class="copy">this is inspection fatigue and habituation. it does not mean inspectors are careless. it means the quality system must be designed with human limits in mind: rotation, lighting, clear criteria, error-proofing, and checks that help attention return.</p>
+            </div>
+            <aside class="attention-callout">
+              <strong>system note</strong>
+              <p>if a defect can only be caught by perfect attention forever, the control is already fragile.</p>
+            </aside>
+          </div>
+        </div>
+      </section>
 
-      <div class="tool-list">
-        <article>
-          <h3>Audits</h3>
-          <p>Compare the real process to the intended process before habits become hidden.</p>
-        </article>
-        <article>
-          <h3>Calibration</h3>
-          <p>Make sure measurement tools still tell the truth.</p>
-        </article>
-        <article>
-          <h3>SPC</h3>
-          <p>Use data over time to spot signals, trends, and unusual variation.</p>
-        </article>
-        <article>
-          <h3>Control plans</h3>
-          <p>Define what matters, how it is checked, and what happens when it moves.</p>
-        </article>
-        <article>
-          <h3>PPAP</h3>
-          <p>Prove a process can meet requirements before full production begins.</p>
-        </article>
-        <article>
-          <h3>CAR / SCAR</h3>
-          <p>Document problems, correct causes, and verify the fix stays fixed.</p>
-        </article>
-        <article>
-          <h3>5 Whys</h3>
-          <p>Move past the first explanation and keep asking what allowed the failure.</p>
-        </article>
-      </div>
-    </section>
+      <section id="tools" class="terminal-section">
+        <aside class="gutter" aria-label="line numbers">
+          <span>071</span><span>072</span><span>073</span><span>074</span>
+        </aside>
+        <div>
+          <div class="command"><span class="prompt">$</span> load anti-entropy-tools</div>
+          <h2>quality tools pull the process back into view.</h2>
 
-    <section id="notes" class="section notes-section">
-      <div class="section-heading">
-        <p class="eyebrow">05 / Shop floor notes</p>
-        <h2>Notes from the shop floor</h2>
-      </div>
+          <div class="tool-grid">
+            <article class="tool-card"><h3>audits</h3><p>compare the real process to the intended process before habits become hidden.</p></article>
+            <article class="tool-card"><h3>calibration</h3><p>make sure measurement tools still tell the truth.</p></article>
+            <article class="tool-card"><h3>spc</h3><p>use data over time to spot signals, trends, and unusual variation.</p></article>
+            <article class="tool-card"><h3>control plans</h3><p>define what matters, how it is checked, and what happens when it moves.</p></article>
+            <article class="tool-card"><h3>ppap</h3><p>prove a process can meet requirements before full production begins.</p></article>
+            <article class="tool-card"><h3>car / scar</h3><p>document problems, correct causes, and verify the fix stays fixed.</p></article>
+            <article class="tool-card"><h3>5 whys</h3><p>move past the first explanation and keep asking what allowed the failure.</p></article>
+          </div>
+        </div>
+      </section>
 
-      <div class="notes">
-        <blockquote>“The chart did not shout. It leaned.”</blockquote>
-        <blockquote>“A gage can be wrong with perfect confidence.”</blockquote>
-        <blockquote>“The operator knew the fix. The document had not caught up.”</blockquote>
-        <blockquote>“Variation is a message. Quality is learning how to listen.”</blockquote>
-      </div>
-    </section>
-  </main>
+      <section id="scale" class="terminal-section">
+        <aside class="gutter" aria-label="line numbers">
+          <span>094</span><span>095</span><span>096</span><span>097</span>
+        </aside>
+        <div>
+          <div class="command"><span class="prompt">$</span> inspect entropy --interactive</div>
+          <h2>drag the entropy scale.</h2>
+          <p class="lead">move from low entropy to high entropy and compare real quality examples.</p>
 
-  <footer class="site-footer">
-    <p>Built with plain HTML, CSS, and JavaScript. Notice the drift. Tune the system.</p>
-  </footer>
+          <div class="lab">
+            <div class="control-panel">
+              <p>drag the control. the readout updates with the condition, example, detail, and a practical quality response.</p>
+              <input id="entropyRange" type="range" min="0" max="4" value="1" step="1" aria-label="entropy level">
+              <div class="scale-labels"><span>low entropy</span><span>high entropy</span></div>
+              <div class="entropy-bars" aria-hidden="true">
+                <div class="bar"><span></span></div>
+                <div class="bar"><span></span></div>
+                <div class="bar"><span></span></div>
+              </div>
+            </div>
+            <div class="readout" aria-live="polite">
+              <pre id="readout"></pre><span class="cursor"></span>
+            </div>
+          </div>
+        </div>
+      </section>
 
-  <script src="script.js"></script>
+      <section id="archive" class="terminal-section">
+        <aside class="gutter" aria-label="line numbers">
+          <span>106</span><span>107</span><span>108</span><span>109</span>
+        </aside>
+        <div>
+          <div class="command"><span class="prompt">$</span> open quality-archive.log</div>
+          <h2>quality archive</h2>
+          <p class="lead">a quiet record of where entropy shows itself before the system fully understands it.</p>
+
+          <div class="archive-log">
+            <article class="archive-entry">
+              <code>log_001 ::</code>
+              <span>xbar drift</span>
+              <p>missed defect after 8 hours of repetition</p>
+            </article>
+            <article class="archive-entry">
+              <code>log_002 ::</code>
+              <span>ucl watch</span>
+              <p>when variation became normal</p>
+            </article>
+            <article class="archive-entry">
+              <code>log_003 ::</code>
+              <span>operator loop</span>
+              <p>the psychology of inspection fatigue</p>
+            </article>
+            <article class="archive-entry">
+              <code>log_004 ::</code>
+              <span>system note</span>
+              <p>entropy in manufacturing systems</p>
+            </article>
+          </div>
+
+          <details class="hidden-notes">
+            <summary><span class="prompt">$</span>&nbsp;cat /notes/on_time.txt</summary>
+            <ul class="time-notes">
+              <li>control is temporary.</li>
+              <li>stability is rented.</li>
+              <li>order decays not only in systems, but in attention.</li>
+              <li>where do we see entropy hiding in systems we trust?</li>
+            </ul>
+          </details>
+
+          <div class="spc-panel" aria-label="animated micro spc chart">
+            <div class="spc-header">
+              <strong>micro spc chart // xbar watch</strong>
+              <span>live sample stream · animated control window</span>
+            </div>
+            <canvas class="spc-chart" id="spcChart" width="900" height="220"></canvas>
+            <div class="spc-legend" aria-hidden="true">
+              <span>sample</span>
+              <span>mean</span>
+              <span>ucl</span>
+              <span>lcl</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="notes" class="terminal-section">
+        <aside class="gutter" aria-label="line numbers">
+          <span>122</span><span>123</span><span>124</span><span>125</span>
+        </aside>
+        <div>
+          <div class="command"><span class="prompt">$</span> tail shop-floor-notes.log</div>
+          <h2>notes from the shop floor</h2>
+          <div class="notes-grid">
+            <blockquote class="note-card">"the chart did not shout. it leaned."</blockquote>
+            <blockquote class="note-card">"a gage can be wrong with perfect confidence."</blockquote>
+            <blockquote class="note-card">"the operator knew the fix. the document had not caught up."</blockquote>
+            <blockquote class="note-card">"variation is a message. quality is learning how to listen."</blockquote>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      built with plain html, css, and javascript. notice the drift. tune the system.
+    </footer>
+  </div>
+
+  <script>
+    const disorderButton = document.querySelector("#disorderButton");
+    const restoreButton = document.querySelector("#restoreButton");
+    const driftCards = document.querySelectorAll(".drift-card");
+    const cardGrid = document.querySelector(".card-grid");
+    const driftingMetrics = document.querySelectorAll(".drifting");
+    const localTime = document.querySelector("#localTime");
+    const systemTime = document.querySelector("#systemTime");
+    const spcCanvas = document.querySelector("#spcChart");
+    const spcContext = spcCanvas.getContext("2d");
+    let clockDrift = 2300;
+    let spcFrame = 0;
+    const spcValues = Array.from({ length: 64 }, function (_, index) {
+      return 50 + Math.sin(index * 0.35) * 2 + (Math.random() - 0.5) * 3;
+    });
+
+    function shuffleCards() {
+      const cards = Array.from(driftCards);
+
+      cards
+        .sort(function () {
+          return Math.random() - 0.5;
+        })
+        .forEach(function (card) {
+          cardGrid.appendChild(card);
+        });
+    }
+
+    function updateDriftingMetrics() {
+      driftingMetrics.forEach(function (metric) {
+        const base = Number(metric.dataset.base);
+        const drift = (Math.random() * 0.02) - 0.01;
+        metric.textContent = (base + drift).toFixed(2) + "%";
+      });
+    }
+
+    function updateClocks() {
+      const now = new Date();
+      clockDrift += 137;
+      const desynced = new Date(now.getTime() + clockDrift);
+
+      localTime.textContent = now.toLocaleTimeString("en-US", { hour12: false });
+      systemTime.textContent = desynced.toLocaleTimeString("en-US", { hour12: false });
+    }
+
+    function resizeSpcCanvas() {
+      const ratio = window.devicePixelRatio || 1;
+      const rect = spcCanvas.getBoundingClientRect();
+
+      spcCanvas.width = Math.floor(rect.width * ratio);
+      spcCanvas.height = Math.floor(rect.height * ratio);
+      spcContext.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function drawSpcChart() {
+      const width = spcCanvas.clientWidth;
+      const height = spcCanvas.clientHeight;
+      const padding = 24;
+      const mean = 50;
+      const ucl = 57;
+      const lcl = 43;
+      const min = 38;
+      const max = 62;
+
+      spcFrame += 1;
+
+      if (spcFrame % 8 === 0) {
+        const previous = spcValues[spcValues.length - 1];
+        const drift = Math.sin(spcFrame * 0.035) * 0.38;
+        const noise = (Math.random() - 0.5) * 2.4;
+        const next = Math.max(min + 1, Math.min(max - 1, previous + drift + noise));
+        spcValues.push(next);
+        spcValues.shift();
+      }
+
+      spcContext.clearRect(0, 0, width, height);
+      spcContext.fillStyle = "#0a0f0d";
+      spcContext.fillRect(0, 0, width, height);
+
+      spcContext.strokeStyle = "rgba(49, 85, 72, 0.62)";
+      spcContext.lineWidth = 1;
+
+      for (let i = 0; i <= 6; i += 1) {
+        const x = padding + ((width - padding * 2) / 6) * i;
+        spcContext.beginPath();
+        spcContext.moveTo(x, padding);
+        spcContext.lineTo(x, height - padding);
+        spcContext.stroke();
+      }
+
+      for (let i = 0; i <= 4; i += 1) {
+        const y = padding + ((height - padding * 2) / 4) * i;
+        spcContext.beginPath();
+        spcContext.moveTo(padding, y);
+        spcContext.lineTo(width - padding, y);
+        spcContext.stroke();
+      }
+
+      function yFor(value) {
+        return height - padding - ((value - min) / (max - min)) * (height - padding * 2);
+      }
+
+      function drawLimit(value, color) {
+        const y = yFor(value);
+        spcContext.strokeStyle = color;
+        spcContext.lineWidth = 1.5;
+        spcContext.beginPath();
+        spcContext.moveTo(padding, y);
+        spcContext.lineTo(width - padding, y);
+        spcContext.stroke();
+      }
+
+      drawLimit(ucl, "#ff756d");
+      drawLimit(mean, "#7ab8ff");
+      drawLimit(lcl, "#ff756d");
+
+      spcContext.strokeStyle = "#6ff0a8";
+      spcContext.lineWidth = 1.6;
+      spcContext.beginPath();
+
+      spcValues.forEach(function (value, index) {
+        const x = padding + (index / (spcValues.length - 1)) * (width - padding * 2);
+        const y = yFor(value);
+
+        if (index === 0) {
+          spcContext.moveTo(x, y);
+        } else {
+          spcContext.lineTo(x, y);
+        }
+      });
+
+      spcContext.stroke();
+
+      spcContext.fillStyle = "rgba(111, 240, 168, 0.9)";
+      spcValues.forEach(function (value, index) {
+        if (index % 6 !== 0) {
+          return;
+        }
+
+        const x = padding + (index / (spcValues.length - 1)) * (width - padding * 2);
+        spcContext.beginPath();
+        spcContext.arc(x, yFor(value), 2.2, 0, Math.PI * 2);
+        spcContext.fill();
+      });
+
+      if (document.body.classList.contains("is-disordered")) {
+        spcContext.fillStyle = "rgba(255, 117, 109, 0.08)";
+        spcContext.fillRect(0, 0, width, height);
+      }
+
+      requestAnimationFrame(drawSpcChart);
+    }
+
+    driftCards.forEach(function (card) {
+      const button = card.querySelector(".card-button");
+
+      button.addEventListener("click", function () {
+        const isOpen = card.classList.toggle("is-open");
+        button.setAttribute("aria-expanded", isOpen);
+      });
+    });
+
+    const entropyData = [
+      {
+        level: "very low entropy",
+        example: "verified first-piece approval",
+        detail: "the setup is checked against the drawing, the gage is calibrated, and the operator has current acceptance criteria.",
+        response: "keep the baseline visible. record the check and continue monitoring.",
+        color: "#6ff0a8",
+        width: "18%"
+      },
+      {
+        level: "controlled",
+        example: "calibrated torque wrench",
+        detail: "the tool is within calibration, the method is known, and the decision is repeatable.",
+        response: "maintain the calibration interval and keep the standard easy to verify.",
+        color: "#6ff0a8",
+        width: "34%"
+      },
+      {
+        level: "watch zone",
+        example: "tool wear trend",
+        detail: "parts still pass, but spc shows the mean walking toward the specification limit.",
+        response: "adjust before sorting begins. check tool life, setup, and recent process changes.",
+        color: "#f1bd61",
+        width: "58%"
+      },
+      {
+        level: "high entropy",
+        example: "outdated work instruction",
+        detail: "the actual method changed, but the document did not. people can still succeed, but only by relying on memory.",
+        response: "update the instruction, retrain the team, and audit the new method.",
+        color: "#f08f5f",
+        width: "78%"
+      },
+      {
+        level: "critical drift",
+        example: "unapproved supplier variation",
+        detail: "incoming material changed without approval. defects appear downstream before the cause is understood.",
+        response: "contain product, start scar or car activity, verify the supplier change, and protect the customer.",
+        color: "#ff756d",
+        width: "96%"
+      }
+    ];
+
+    const range = document.querySelector("#entropyRange");
+    const readout = document.querySelector("#readout");
+    const bars = document.querySelectorAll(".bar span");
+
+    function updateReadout() {
+      const item = entropyData[Number(range.value)];
+
+      readout.textContent =
+        "entropy_level: " + item.level + "\n" +
+        "example: " + item.example + "\n\n" +
+        "detail:\n" + item.detail + "\n\n" +
+        "quality_response:\n" + item.response;
+
+      bars.forEach(function (bar) {
+        bar.style.width = item.width;
+        bar.style.background = item.color;
+      });
+
+      range.style.accentColor = item.color;
+    }
+
+    range.addEventListener("input", updateReadout);
+
+    disorderButton.addEventListener("click", function () {
+      document.body.classList.add("is-disordered");
+      range.value = "4";
+      updateReadout();
+    });
+
+    restoreButton.addEventListener("click", function () {
+      document.body.classList.remove("is-disordered");
+      range.value = "1";
+      updateReadout();
+      clockDrift = 2300;
+      updateDriftingMetrics();
+      updateClocks();
+    });
+
+    shuffleCards();
+    updateDriftingMetrics();
+    updateClocks();
+    setInterval(updateDriftingMetrics, 1800);
+    setInterval(updateClocks, 1000);
+    resizeSpcCanvas();
+    window.addEventListener("resize", resizeSpcCanvas);
+    requestAnimationFrame(drawSpcChart);
+    updateReadout();
+  </script>
 </body>
 </html>
